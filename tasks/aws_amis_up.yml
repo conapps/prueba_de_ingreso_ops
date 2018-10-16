@@ -12,6 +12,9 @@
     name: '{{aws_key_pair_name}}'
   register: pair
 
+- debug:
+    var: pair
+
 - name: 'Crea el archivo {{ aws_key_pair_name }} dentro del directorio {{pod_secret_directory}}'
   lineinfile:
     dest: '{{pod_secret_directory}}/{{aws_key_pair_name}}'
