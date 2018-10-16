@@ -8,6 +8,7 @@
 
 - name: Crear la llave privada
   ec2_key:
+    region: '{{aws_region}}'
     name: '{{aws_key_pair_name}}'
   register: pair
 
