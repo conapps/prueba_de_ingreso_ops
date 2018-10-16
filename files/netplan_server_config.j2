@@ -1,0 +1,10 @@
+network:
+  version: 2
+  ethernets:
+    eth0:
+      nameservers:
+        addresses: [{{server_private_ip}},8.8.8.8]
+      routes:
+        - to: 192.168.1.0/24
+          via: {{ router_private_ip }}
+          on-link: true

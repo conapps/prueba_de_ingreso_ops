@@ -1,0 +1,109 @@
+# ---
+# aws_amis_up.yml
+#
+# Tareas para levantar dos servidores en AWS:
+#   - 1 Servidor Ubuntu
+#   - 1 Router CISCO CSR1000
+# ---
+
+- name: Crear la llave privada
+  ec2_key:
+    name: '{{aws_key_pair_name}}'
+  register: pair
+
+- name: 'Crea el archivo {{ aws_key_pair_name }} dentro del directorio {{pod_secret_directory}}'
+  lineinfile:
+    dest: '{{pod_secret_directory}}/{{aws_key_pair_name}}'
+    line: '{{pair.key.private_key}}'
+    mode: 0400
+    create: yes
+
+- name: Levantar el servidor CISCO CSR1000
+  ec2:
+    count: 1
+    group_id: '{{ aws_sg_id }}'
+    vpc_subnet_id: '{{ aws_subnet_id }}'
+    instance_type: 't2.medium'
+    image: 'ami-062f4179'
+    wait: yes
+    region: '{{ aws_region }}'
+    keypair: '{{ aws_key_pair_name }}'
+    assign_public_ip: yes
+    source_dest_check: no
+    instance_tags:
+      Name: '{{ ec2_router_server_name }}'
+      Pod: '{{pod | string}}'
+      Posicion: '{{pod_position}}'
+      Record: '{{ ec2_router_server_name }}.{{pod_domain}}'
+  register: router
+
+- name: Nos quedamos solo con el primer elemento de las instancias creadas
+  set_fact:
+    router: '{{router["instances"][0]}}'
+
+- name: Crea el registro A apuntando a la IP pública del router
+  route53:
+    state: present
+    zone: '{{pod_domain}}'
+    record: '{{ ec2_router_server_name }}.{{pod_domain}}'
+    type: A
+    value: '{{ router.public_ip }}'
+    wait: yes
+    overwrite: true
+  register: router_dns
+
+- name: Agregar el router al inventario de forma dinamica
+  add_host:
+    name: "{{router.public_ip}}"
+    groups: router
+    hostname: 'RTR'
+    ansible_ssh_private_key_file: '{{pod_secret_directory}}/{{aws_key_pair_name}}'
+    ansible_user: '{{ ec2_router_server_user }}'
+    ansible_network_os: ios
+    ansible_become: yes
+    ansible_become_method: enable
+    ansible_connection: network_cli
+
+- name: Levantar el servidor Ubuntu
+  ec2:
+    count: 1
+    group_id: '{{ aws_sg_id }}'
+    vpc_subnet_id: '{{ aws_subnet_id }}'
+    instance_type: 't2.medium'
+    image: 'ami-0ac019f4fcb7cb7e6'
+    wait: yes
+    region: '{{ aws_region }}'
+    keypair: '{{ aws_key_pair_name }}'
+    assign_public_ip: yes
+    instance_tags:
+      Name: '{{ ec2_ubuntu_server_name }}'
+      Pod: '{{pod | string}}'
+      Posicion: '{{pod_position}}'
+      Record: '{{ ec2_ubuntu_server_name }}.{{pod_domain}}'
+  register: ubuntu
+
+- name: Nos quedamos solo con el primer elemento de las instancias creadas
+  set_fact:
+    ubuntu: '{{ubuntu["instances"][0]}}'
+
+- name: Crea el registro A apuntando a la IP pública del servidor
+  route53:
+    state: present
+    zone: '{{pod_domain}}'
+    record: '{{ ec2_ubuntu_server_name }}.{{pod_domain}}'
+    type: A
+    value: '{{ ubuntu.public_ip }}'
+    wait: yes
+    overwrite: true
+  register: ubuntu_dns
+
+- name: Agregar el servidor ubuntu al inventario de forma dinamica
+  add_host:
+    name: '{{ ubuntu.public_ip }}'
+    groups: server
+    router_private_ip: '{{router.private_ip}}'
+    server_private_ip: '{{ubuntu.private_ip}}'
+    ansible_ssh_private_key_file: '{{pod_secret_directory}}/{{aws_key_pair_name}}'
+    ansible_user: '{{ ec2_ubuntu_server_user }}'
+    ansible_python_interpreter: '{{ ec2_ubuntu_server_python_interpreter }}'
+    ansible_become: yes

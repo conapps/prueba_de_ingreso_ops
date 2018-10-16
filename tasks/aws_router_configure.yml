@@ -1,0 +1,17 @@
+# ---
+# aws_server_configure.yml
+#
+# Tareas para configurar el servidor Ubuntu:
+#   - Cambiamos el hostname del equipo
+# ---
+
+- name: Modificar el hostname
+  ios_config:
+    lines: 'hostname {{hostname}}'
+  when: hostname is defined
+
+- name: Desabilitamos IP redirects en interface GigabitEthernet1 para agilizar las pruebas
+  ios_config:
+    lines:
+      - no ip redirects
+    parents: interface GigabitEthernet1

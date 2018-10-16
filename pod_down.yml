@@ -1,0 +1,15 @@
+# ---
+# pod_down.yml
+#
+# Ansible playbook que levanta destruye el POD creado para probar el
+# conocimiento de los candidatos.
+# ---
+
+- name: Destruir el ambiente en AWS
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - include_tasks: ./tasks/aws_amis_down.yml
+  vars_files:
+    - ./vars/pod.yml

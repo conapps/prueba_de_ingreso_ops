@@ -1,0 +1,22 @@
+# ---
+# vars/pod_up.yml
+# 
+# Variables para levantar el laboratorio para la prueba de ingreso a la 
+# posición de Operaciones.
+# ---
+pod: 1
+pod_domain: labs.conatest.click
+pod_position: operaciones
+pod_secret_directory: secret_vars
+
+aws_region: us-east-1
+aws_key_pair_name: 'key_pair_{{pod}}_{{pod_position}}'
+aws_subnet_id: subnet-1edf9e32
+aws_sg_id: sg-0d1a479bd00c7ebcf
+
+ec2_ubuntu_server_name: server
+ec2_ubuntu_server_user: ubuntu
+ec2_ubuntu_server_python_interpreter: /usr/bin/python3
+
+ec2_router_server_name: router
+ec2_router_server_user: ec2-user

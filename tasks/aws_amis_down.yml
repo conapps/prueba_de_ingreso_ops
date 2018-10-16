@@ -1,0 +1,25 @@
+- name: 'Obtenemos todas las amis del pod #{{lab_pod}} para la posición {{pod_position}}'
+  ec2_instance_facts:
+    region: '{{aws_region}}'
+    filters:
+      'tag:Pod': '{{pod | string}}'
+      'tag:Posicion': '{{pod_position}}'
+  register: amis
+
+- name: Eliminamos las AMIs encontradas
+  ec2:
+    instance_ids: '{{ item.instance_id }}'
+    state: absent
+    region: us-east-1
+    wait: yes
+  with_items: '{{ amis.instances }}'
+
+- name: Eliminamos la llave privada
+  ec2_key:
+    name: '{{aws_key_pair_name}}'
+    state: absent
+
+- name: Eliminamos el archivo de llave local
+  shell: '/bin/rm -rf {{pod_secret_directory}}/{{aws_key_pair_name}}'
+  args:
+    warn: False
