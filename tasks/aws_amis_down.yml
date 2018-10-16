@@ -17,6 +17,7 @@
 - name: Eliminamos la llave privada
   ec2_key:
     name: '{{aws_key_pair_name}}'
+    region: '{{aws_region}}'
     state: absent
 
 - name: Eliminamos el archivo de llave local
