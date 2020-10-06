@@ -6,6 +6,24 @@ Este `playbook` levanta un ambiente de desarrollo en la nube de AWS para realiza
 
 Para poder correr los `playbooks` es necesario configurar previamente las variables de entorno `AWS_ACCESS_KEY_ID` y `AWS_SECRET_ACCESS_KEY`. Las mismas serán utilizadas por los `playbook` para levantar la infraestructura en la nube de AWS.
 
+## Recomendaciones
+
+El proyecto esta configurado para hacer uso de ciertas buenas prácticas a la hora de correr `playbooks` de Ansible. Por lo tanto, se recomienda correr los `playbooks` de este proyecto utilizando el archivo de configuración `ansible.cfg`. Una forma de hacer esto es configurando la siguiente variable de entorno.
+
+```
+export ANSIBLE_CONFIG=./ansible.cfg
+```
+
+## Instalación de roles
+
+Las tareas requieren del uso de ciertos roles que tienen que estar presentes previo a la ejecución de los `playbooks`. Por defecto, los mismos no se guardan en GitHub.
+
+La lista de roles se encuentra definida en el archivo `requirements.yml` y se pueden instalar todos juntos ejecutando el siguiente comando:
+
+```
+ansible-galaxy install -r requirements.yml
+```
+
 ## Pod Up
 
 Cuando se ejecuta el Pod se crean dos archivos en la carpeta `secret_vars`. Uno de ellos contiene datos sobre la infraestructura implementada, y el otro es la llave privada que debe utilizarse para acceder a los servidores.
