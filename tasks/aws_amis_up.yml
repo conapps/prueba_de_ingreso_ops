@@ -22,68 +22,26 @@
     mode: 0400
     create: yes
 
-- name: Levantar el servidor CISCO CSR1000
-  amazon.aws.ec2:
-    count: 1
-    group_id: "{{aws_sg_id}}"
-    vpc_subnet_id: "{{aws_subnet_id}}"
-    instance_type: "t2.medium"
-    image: "ami-062f4179"
-    wait: yes
-    region: "{{aws_region}}"
-    keypair: "{{aws_key_pair_name}}"
-    assign_public_ip: yes
-    source_dest_check: no
-    instance_tags:
-      Name: "{{ec2_router_server_name}}"
-      Pod: "{{pod | string}}"
-      Posicion: "{{pod_position}}"
-      Record: "{{ec2_router_server_name }}.{{pod_domain}}"
-  register: router
-
-- name: Nos quedamos solo con el primer elemento de las instancias creadas
-  set_fact:
-    router: "{{router['instances'][0]}}"
-
-- name: Crea el registro A apuntando a la IP pública del router
-  community.aws.route53:
-    state: present
-    zone: "{{pod_domain}}"
-    record: "{{ec2_router_server_name}}.{{pod_domain}}"
-    type: A
-    value: "{{router.public_ip}}"
-    wait: yes
-    overwrite: true
-  register: router_dns
-
-- name: Agregar el router al inventario de forma dinamica
-  add_host:
-    name: "{{router.public_ip}}"
-    groups: router
-    hostname: "RTR"
-    ansible_ssh_private_key_file: "{{pod_secret_directory}}/{{aws_key_pair_name}}"
-    ansible_user: "{{ec2_router_server_user}}"
-    ansible_network_os: ios
-    ansible_become: yes
-    ansible_become_method: enable
-    ansible_connection: network_cli
-
 - name: Levantar el servidor Ubuntu
   amazon.aws.ec2:
+    assign_public_ip: yes
     count: 1
     group_id: "{{aws_sg_id}}"
-    vpc_subnet_id: "{{aws_subnet_id}}"
-    instance_type: 't2.medium'
-    image: 'ami-0ac019f4fcb7cb7e6'
-    wait: yes
-    region: "{{aws_region}}"
-    keypair: "{{aws_key_pair_name}}"
-    assign_public_ip: yes
+    image: "ami-0ac019f4fcb7cb7e6"
     instance_tags:
       Name: "{{ec2_ubuntu_server_name}}"
       Pod: "{{pod | string}}"
       Posicion: "{{pod_position}}"
       Record: "{{ec2_ubuntu_server_name }}.{{pod_domain}}"
+      Project: prueba_de_ingreso
+    instance_type: "t2.medium"
+    key_name: "{{aws_key_pair_name}}"
+    wait: yes
+    region: "{{aws_region}}"
+    source_dest_check: no
+    state: present
+    vpc_subnet_id: "{{aws_subnet_id}}"
+    wait: yes
   register: ubuntu
 
 - name: Nos quedamos solo con el primer elemento de las instancias creadas
@@ -101,6 +59,54 @@
     overwrite: true
   register: ubuntu_dns
 
+- name: Levantar el servidor CISCO CSR1000
+  amazon.aws.ec2:
+    assign_public_ip: yes
+    count: 1
+    group_id: "{{aws_sg_id}}"
+    image: "ami-0b85ba86e51c069a7"
+    instance_tags:
+      Name: "{{ec2_router_server_name}}"
+      Pod: "{{pod | string}}"
+      Posicion: "{{pod_position}}"
+      Record: "{{ec2_router_server_name }}.{{pod_domain}}"
+      Project: prueba_de_ingreso
+    instance_type: "t3.large"
+    key_name: "{{aws_key_pair_name}}"
+    region: "{{aws_region}}"
+    source_dest_check: no
+    state: present
+    vpc_subnet_id: "{{aws_subnet_id}}"
+    wait: yes
+  register: router
+
+- name: Nos quedamos solo con el primer elemento de las instancias creadas
+  set_fact:
+    router: "{{router['instances'][0]}}"
+
+- name: Crea el registro A apuntando a la IP privada del router
+  community.aws.route53:
+    state: present
+    zone: "{{pod_domain}}"
+    record: "{{ec2_router_server_name}}.{{pod_domain}}"
+    type: A
+    value: "{{router.public_ip}}"
+    wait: yes
+    overwrite: true
+  register: router_dns
+
+- name: Agregar el router al inventario de forma dinamica
+  add_host:
+    name: "{{router.public_ip}}"
+    groups: router
+    router_private_ip: "{{router.private_ip}}"
+    server_private_ip: "{{ubuntu.private_ip}}"
+    hostname: "RTR"
+    ansible_ssh_private_key_file: "{{pod_secret_directory}}/{{aws_key_pair_name}}"
+    ansible_user: "{{ec2_router_server_user}}"
+    ansible_network_os: vyos.vyos.vyos
+    ansible_connection: ansible.netcommon.network_cli
+  
 - name: Agregar el servidor ubuntu al inventario de forma dinamica
   add_host:
     name: "{{ubuntu.public_ip}}"
@@ -111,3 +117,14 @@
     ansible_user: "{{ec2_ubuntu_server_user}}"
     ansible_python_interpreter: "{{ec2_ubuntu_server_python_interpreter}}"
     ansible_become: yes
+
+- name: Eliminamos el archivo host.yml
+  file:
+    path: './hosts.yml'
+    state: absent
+
+- name: Actualizar el archivo `hosts.yml`
+  lineinfile:
+    dest: "./hosts.yml"
+    line: "{{lookup('template', './files/hosts.yml.j2')}}"
+    create: yes

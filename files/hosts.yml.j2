@@ -1,0 +1,20 @@
+all:
+  children:
+    server:
+      hosts:
+        {{ubuntu.public_ip}}:
+          router_private_ip: "{{router.private_ip}}"
+          server_private_ip: "{{ubuntu.private_ip}}"
+          ansible_ssh_private_key_file: "{{pod_secret_directory}}/{{aws_key_pair_name}}"
+          ansible_user: "{{ec2_ubuntu_server_user}}"
+          ansible_python_interpreter: "{{ec2_ubuntu_server_python_interpreter}}"
+    router:
+      hosts:
+        {{router.public_ip}}:
+          router_private_ip: "{{router.private_ip}}"
+          server_private_ip: "{{ubuntu.private_ip}}"
+          hostname: "RTR"
+          ansible_ssh_private_key_file: "{{pod_secret_directory}}/{{aws_key_pair_name}}"
+          ansible_user: "{{ec2_router_server_user}}"
+          ansible_network_os: vyos.vyos.vyos
+          ansible_connection: ansible.netcommon.network_cli

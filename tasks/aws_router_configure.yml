@@ -1,17 +1,18 @@
 # ---
 # aws_server_configure.yml
-#
-# Tareas para configurar el servidor Ubuntu:
-#   - Cambiamos el hostname del equipo
 # ---
 
-- name: Modificar el hostname
-  ios_config:
-    lines: 'hostname {{hostname}}'
+- name: configure the remote device
+  vyos.vyos.vyos_config:
+    lines:
+    - set system host-name {{ inventory_hostname }}
+    - delete service dhcp-server
+    - delete service ssh disable-password-authentication
   when: hostname is defined
 
-- name: Desabilitamos IP redirects en interface GigabitEthernet1 para agilizar las pruebas
-  ios_config:
-    lines:
-      - no ip redirects
-    parents: interface GigabitEthernet1
+- name: create a new user
+  vyos.vyos.vyos_user:
+    name: admin
+    configured_password: admin
+    level: admin
+    state: present

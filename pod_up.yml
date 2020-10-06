@@ -11,6 +11,8 @@
   hosts: localhost
   connection: local
   gather_facts: no
+  tags:
+    - infra
   tasks:
     - include_tasks: ./tasks/aws_amis_up.yml
   vars_files:
@@ -19,16 +21,28 @@
 - name: Configuración de servidor
   hosts: server
   gather_facts: yes
-  roles:
-    - geerlingguy.docker
+  tags:
+    - config
+    - server
+  become: true
   tasks:
+    - name: Upgrade all apt packages
+      apt:
+        state: latest
+        update_cache: yes
+        cache_valid_time: 3600
+    #- include_role:
+    #    name: geerlingguy.docker
     - include_tasks: ./tasks/aws_server_configure.yml
   vars_files:
     - ./vars/pod.yml
 
 - name: Configuración del router
   hosts: router
-  gather_facts: no
+  gather_facts: yes
+  tags:
+    - config
+    - router
   tasks:
     - include_tasks: ./tasks/aws_router_configure.yml
   vars_files:

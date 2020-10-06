@@ -19,8 +19,8 @@ ec2_ubuntu_server_name: server
 ec2_ubuntu_server_user: ubuntu
 ec2_ubuntu_server_python_interpreter: /usr/bin/python3
 
-ec2_router_server_name: router
-ec2_router_server_user: ec2-user
+ec2_router_server_name: vyos
+ec2_router_server_user: vyos
 
 project_repo: "{{lookup('env', 'PROJECT_REPO')}}"
 project_repo_name: "{{lookup('env', 'PROJECT_REPO_NAME')}}"

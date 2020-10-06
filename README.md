@@ -59,7 +59,7 @@ PROJECT_REPO_NAME=prueba_de_ingreso
 Una vez creado el archivo, se pueden cargar estas variables en la consola de la siguiente manera:
 
 ```bash
-source .env
+export $(cat .env)
 ```
 
 **Es importante recordar que el proyecto esta diseñado para operar de forma exclusiva sobre la región `us-east-1` de AWS. Por lo tanto, las subnetes y security groups tienen que exisitir previamente en esta región. Este proyecto no levanta ninguna otro recurso además de las instancias.**

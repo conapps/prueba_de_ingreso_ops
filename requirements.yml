@@ -6,3 +6,4 @@ collections:
   - name: community.general
   - name: amazon.aws
   - name: community.aws
+  - name: vyos.vyos
