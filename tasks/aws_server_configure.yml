@@ -1,23 +1,16 @@
 # ---
 # aws_server_configure.yml
-#
-# Tareas para configurar el servidor Ubuntu:
-#   - Cambiamos el Hostname
-#   - Corregir problema con LOCALE
-#   - Agregar .bashrc customizado
-#   - Instalar Docker
-#   - Agregamos una ruta estatica entre el server y el router
 # ---
 
 - name: Change hostname
   hostname:
-    name: '{{ ec2_ubuntu_server_name }}'
+    name: "{{ec2_ubuntu_server_name}}"
 
 - name: Change hosts file
   lineinfile:
     path: /etc/hosts
-    regexp: '^127.0.0.1'
-    line: '127.0.0.1  {{ ec2_ubuntu_server_name}}'
+    regexp: "^127.0.0.1"
+    line: "127.0.0.1  {{ ec2_ubuntu_server_name}}"
 
 - name: Fix locale issue
   blockinfile:
@@ -30,7 +23,7 @@
 - name: Copiamos nuesto .vimrc customizado
   copy:
     src: ./files/.vimrc
-    dest: '/home/ubuntu'
+    dest: "/home/ubuntu"
     mode: 0644
     owner: ubuntu
     group: ubuntu
@@ -69,14 +62,10 @@
 
       prompt
 
-      function validate {
-        python3 /home/ubuntu/.scripts/test.py
-      }
-
 - name: Instalamos Python 2.7
   apt:
     update_cache: true
-    name: '{{ packages }}'
+    name: "{{packages}}"
     state: present
   vars:
     packages:
@@ -86,20 +75,19 @@
   set_fact:
     ansible_python_interpreter: /usr/bin/python
 
-- name: Instalamos Pip2 y Git
+- name: Instalamos otros paquetes
   apt:
-    name: '{{ packages }}'
+    name: "{{packages}}"
     state: present
   vars:
     packages:
       - python
       - python-pip
       - git
-      - bind9
 
 - name: Instalamos paquetes con Pip
   pip:
-    name: '{{item}}'
+    name: "{{item}}"
     executable: /usr/bin/pip
   loop:
     - docker-compose
@@ -108,34 +96,11 @@
   shell: usermod -aG docker $USER
   become: yes
 
-- name: Copiamos el archivo de configuración de Bind9
-  blockinfile:
-    path: /etc/bind/db.clientedemo.com.uy
-    insertafter: EOF
-    content: '{{lookup("template", "./files/db.clientedemo.com.uy.j2")}}'
-    create: yes
-    owner: ubuntu
-    group: ubuntu
-    mode: u=rw,g=r,o=r
-
-- name: Crearmos la carpeta validadora
-  file: 
-    path: /home/ubuntu/.scripts
-    state: directory
-
-- name: Copiamos los scripts de prueba
-  copy:
-    src: ../files/scripts/
-    dest: /home/ubuntu/.scripts/
-    owner: ubuntu
-    group: ubuntu
-    mode: 0644
-
 - name: Agregamos una ruta estatica entre el server y el router
   blockinfile:
     path: /etc/netplan/netplan_server_config.yaml
     insertafter: EOF
-    content: '{{lookup("template", "./files/netplan_server_config.j2")}}'
+    content: "{{lookup('template', './files/netplan_server_config.j2')}}"
     create: yes
     owner: root
 
@@ -144,3 +109,18 @@
   async: 1
   poll: 0
   ignore_errors: true
+
+- name: Clonamos el repositorio con los contenedores de prueba
+  git:
+    repo: "{{project_repo}}"
+    dest: /home/ubuntu/{{project_repo_name}}
+
+- name: Creamos e iniciamos el proyecto
+  community.general.docker_compose:
+    project_src:  /home/ubuntu/{{project_repo_name}}
+    build: yes
+  register: output
+
+- name: Verificar la salida del comando docker-compose up
+  ansible.builtin.debug:
+    var: output

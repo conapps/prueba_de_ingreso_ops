@@ -1,5 +1,5 @@
 - name: 'Obtenemos todas las amis del pod #{{lab_pod}} para la posición {{pod_position}}'
-  ec2_instance_facts:
+  community.aws.ec2_instance_facts:
     region: '{{aws_region}}'
     filters:
       'tag:Pod': '{{pod | string}}'
@@ -7,7 +7,7 @@
   register: amis
 
 - name: Eliminamos las AMIs encontradas
-  ec2:
+  amazon.aws.ec2:
     instance_ids: '{{ item.instance_id }}'
     state: absent
     region: us-east-1
@@ -15,7 +15,7 @@
   with_items: '{{ amis.instances }}'
 
 - name: Eliminamos la llave privada
-  ec2_key:
+  amazon.aws.ec2_key:
     name: '{{aws_key_pair_name}}'
     region: '{{aws_region}}'
     state: absent

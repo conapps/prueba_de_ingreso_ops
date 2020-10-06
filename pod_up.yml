@@ -3,7 +3,7 @@
 #
 # Ansible playbook que levanta un POD en AWS para realizar la prueba de ingreso
 # de Operaciones. El mismo levanta 2 servidores:
-#   - `serverNum1`: Servidor DNS y de Aplicaciones.
+#   - `serverNum1`: Servidor con Docker instalado y múltiples servicios.
 #   - `router`: Router CISCO CSR1000
 # ---
 
