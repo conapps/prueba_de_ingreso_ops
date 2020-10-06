@@ -31,8 +31,8 @@
         state: latest
         update_cache: yes
         cache_valid_time: 3600
-    #- include_role:
-    #    name: geerlingguy.docker
+    - include_role:
+       name: geerlingguy.docker
     - include_tasks: ./tasks/aws_server_configure.yml
   vars_files:
     - ./vars/pod.yml

@@ -82,10 +82,6 @@
   loop:
     - docker-compose
 
-- name: Agregamos el usuario $USER al grupo Docker para evitar tener que usar sudo con Docker
-  shell: usermod -aG docker ubuntu
-  become: yes
-
 - name: Agregamos una ruta estatica entre el server y el router
   blockinfile:
     path: /etc/netplan/netplan_server_config.yaml
