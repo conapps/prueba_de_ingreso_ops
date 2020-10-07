@@ -8,7 +8,18 @@
     - set system host-name {{ inventory_hostname }}
     - delete service dhcp-server
     - delete service ssh disable-password-authentication
-  when: hostname is defined
+    # OUTSIDE TO LOCAL
+    - set firewall name FROM-OUTSIDE-TO-LOCAL default-action "drop"
+    - set firewall name FROM-OUTSIDE-TO-LOCAL rule 10 action "accept"
+    - set firewall name FROM-OUTSIDE-TO-LOCAL rule 10 destination port "22"
+    - set firewall name FROM-OUTSIDE-TO-LOCAL rule 10 protocol "tcp"
+    # LOCAL
+    - set zone-policy zone LOCAL default-action "drop"
+    - set zone-policy zone LOCAL local-zone
+    - set zone-policy zone LOCAL from OUTSIDE firewall name "FROM-OUTSIDE-TO-LOCAL"
+    # OUTSIDE  
+    - set zone-policy zone OUTSIDE default-action "drop"
+    - set zone-policy zone OUTSIDE interface "eth0"
 
 - name: create a new user
   vyos.vyos.vyos_user:

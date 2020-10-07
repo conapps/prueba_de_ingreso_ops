@@ -103,6 +103,12 @@
           extra_hosts:
             - "vyos:{{router_private_ip}}"
 
+- name: Modificamos el valor de la IP del vyos
+  lineinfile:
+    path: /home/ubuntu/{{project_repo_name}}/docker-compose.yml
+    regexp: "      - VYOS_IP=172.20.0.5"
+    line:   "      - VYOS_IP={{router_private_ip}}"
+
 - name: Instalamos las dependencias del contenedor de frontend y hacemos el build
   shell: "docker run --rm --name my-running-script -v /home/ubuntu/{{project_repo_name}}/frontend/frontend:/usr/src/app -w /usr/src/app node:stretch npm install"
 
